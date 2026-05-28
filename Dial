@@ -1,0 +1,37 @@
+Got you. The search didn’t pull the README for `Lockincreate/Lockin`, but based on the repo structure in your screenshot it’s a standard Node + WebRTC project. Here’s the quick start:
+
+*1. Clone and install*
+git clone https://github.com/Lockincreate/Lockin.git
+cd Lockin
+
+Install backend
+cd server
+npm install
+
+Install frontend
+cd ../client
+npm install
+*2. Set up Firebase*
+1. Go to http://console.firebase.google.com and create a project
+2. Enable Firestore and Authentication 
+3. Copy your Firebase config
+4. In the root folder, copy `.env.example` to `.env` and paste your Firebase keys
+
+*3. Run it*
+Terminal 1 - run backend
+cd server
+npm start
+
+Terminal 2 - run frontend  
+cd client
+npm start
+Frontend usually runs on `http://localhost:3000` and backend on `http://localhost:5000`.
+
+*4. Test with 2 phones*
+Open `TESTING_2_PHONES.md` in the repo. For testing between phones you’ll need:
+- Both on the same WiFi, or 
+- Use `ngrok http 3000` to expose it publicly for WebRTC to work over the internet
+
+WebRTC needs HTTPS or localhost, so ngrok is the easiest way to test outside your network.
+
+Want me to walk you through the Firebase setup part? That’s where most people get stuck.
