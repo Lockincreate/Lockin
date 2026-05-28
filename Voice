@@ -1,0 +1,181 @@
+For a free calling app over Wi-Fi you’ll use WebRTC. It runs peer-to-peer in the browser, so no call server costs. You just need a tiny signaling server to connect the 2 people.
+
+Here’s a single-file editable version you can drop in your `Lockincreate/Lockin-` repo and run on GitHub Pages:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lockin Call</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #0f172a;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  video {
+    width: 45%;
+    max-width: 400px;
+    background: black;
+    border-radius: 12px;
+    margin: 5px;
+  }
+  #videos {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  input, button {
+    padding: 10px;
+    margin: 5px;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+  }
+  button {
+    background: #22c55e;
+    color: black;
+    cursor: pointer;
+  }
+  button.danger { background: #ef4444; color: white; }
+  #roomId {
+    background: #1e293b;
+    color: white;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<h1>Lockin Call - Free Wi-Fi Calling</h1>
+<p>Both users open this page, enter the same Room ID, and hit Call</p>
+
+<div>
+  <input id="roomId" placeholder="Enter Room ID">
+  <button onclick="startCall()">Start Call</button>
+  <button class="danger" onclick="endCall()">End</button>
+</div>
+
+<div id="videos">
+  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="remoteVideo" autoplay playsinline></video>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// FREE Firebase config - replace with your own at console.firebase.google.com
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "XXXX",
+  appId: "XXXX"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let pc;
+let localStream;
+const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
+window.startCall = async () => {
+  const roomId = document.getElementById('roomId').value.trim();
+  if (!roomId) return alert("Enter a Room ID");
+
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  document.getElementById('localVideo').srcObject = localStream;
+
+  pc = new RTCPeerConnection(config);
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  pc.ontrack = e => {
+    document.getElementById('remoteVideo').srcObject = e.streams[0];
+  };
+
+  pc.onicecandidate = e => {
+    if (e.candidate) {
+      set(ref(db, `rooms/${roomId}/callerCandidates/${Date.now()}`), e.candidate.toJSON());
+    }
+  };
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await set(ref(db, `rooms/${roomId}/offer`), offer);
+
+  onValue(ref(db, `rooms/${roomId}/answer`), async snap => {
+    if (snap.exists() &&!pc.currentRemoteDescription) {
+      await pc.setRemoteDescription(snap.val());
+    }
+  });
+
+  onValue(ref(db, `rooms/${roomId}/calleeCandidates`), snap => {
+    snap.forEach(child => pc.addIceCandidate(child.val()));
+  });
+
+  onValue(ref(db, `rooms/${roomId}/callerCandidates`), snap => {
+    snap.forEach(child => pc.addIceCandidate(child.val()));
+  });
+};
+
+onValue(ref(db, `rooms/`), async snap => {
+  const roomId = document.getElementById('roomId').value.trim();
+  const data = snap.val()?.[roomId];
+  if (!data?.offer || pc) return;
+
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  document.getElementById('localVideo').srcObject = localStream;
+
+  pc = new RTCPeerConnection(config);
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  pc.ontrack = e => {
+    document.getElementById('remoteVideo').srcObject = e.streams[0];
+  };
+
+  pc.onicecandidate = e => {
+    if (e.candidate) {
+      set(ref(db, `rooms/${roomId}/calleeCandidates/${Date.now()}`), e.candidate.toJSON());
+    }
+  };
+
+  await pc.setRemoteDescription(data.offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  await set(ref(db, `rooms/${roomId}/answer`), answer);
+});
+
+window.endCall = () => {
+  if (pc) pc.close();
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  const roomId = document.getElementById('roomId').value.trim();
+  remove(ref(db, `rooms/${roomId}`));
+  location.reload();
+};
+</script>
+</body>
+</html>
+*How this works:*
+1. *WebRTC* handles the actual audio/video over Wi-Fi directly between the 2 browsers. No call charges.
+2. *Firebase Realtime Database* is used as the free signaling server to match the 2 people. Firebase free tier gives 100 connections/day, which is enough for personal use.
+3. *STUN server* `stun.l.google.com:19302` is free and handles NAT traversal.
+
+*Setup in 3 min:*
+1. Go to http://console.firebase.google.com, create a free project, enable Realtime Database in test mode.
+2. Copy your config into the `firebaseConfig` section in the code.
+3. Upload as `index.html` to your GitHub repo, enable GitHub Pages.
+4. Share the link + Room ID with the person you want to call. Both open it, enter same Room ID, hit Start Call.
+
+*Limitations:*
+- Works best 1-on-1.
+- Both need to have the page open.
+- For calls outside Wi-Fi or behind strict networks, you’d need a paid TURN server.
+
+Want me to give you a version without Firebase so it’s 100% self-hosted, or one that works as a React Native app for phones?
