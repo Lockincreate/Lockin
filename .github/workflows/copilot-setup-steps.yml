@@ -1,0 +1,64 @@
+Got you. I'll use *Agora* as the example since it's the most common for "calling tokens" in apps like Lockin. If you're using Twilio or LiveKit, say the word and I'll swap it.
+
+Here's a working backend setup for generating RTC tokens:
+
+1. Install the package
+npm install agora-access-token
+2. http://Node.js token generation function
+const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
+
+const APP_ID = process.env.AGORA_APP_ID;
+const APP_CERTIFICATE = process.env.AGORA_APP_CERTIFICATE;
+
+function generateCallToken(channelName, uid, role = RtcRole.PUBLISHER) {
+    const expireTimeSeconds = 3600; // 1 hour
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const privilegeExpireTimestamp = currentTimestamp + expireTimeSeconds;
+
+    const token = RtcTokenBuilder.buildTokenWithUid(
+        APP_ID,
+        APP_CERTIFICATE,
+        channelName,
+        uid,
+        role,
+        privilegeExpireTimestamp
+    );
+    
+    return {
+        token,
+        appId: APP_ID,
+        channelName,
+        uid,
+        expireAt: privilegeExpireTimestamp
+    };
+}
+
+// Usage for a 1-1 call
+app.post('/get-call-token', (req, res) => {
+    const { callerId, calleeId } = req.body;
+    const channelName = `call_${callerId}_${calleeId}`;
+    const uid = parseInt(callerId); // Agora needs numeric UID
+    
+    const result = generateCallToken(channelName, uid);
+    res.json(result);
+});
+3. Settings you should use for Lockin
+*Backend env variables:*
+- `AGORA_APP_ID`: From Agora Console > Project Management
+- `AGORA_APP_CERTIFICATE`: Enable "App Certificate" in the same place
+
+*Token params:*
+- *Channel name*: `call_${callerId}_${calleeId}` keeps channels unique
+- *UID*: Use the user's numeric DB ID. If you only have strings, hash it to a number
+- *Role*: `RtcRole.PUBLISHER` for both users in a call
+- *Expiry*: 3600s is standard. Client auto-renews if call goes longer
+
+4. Client side flow
+1. User taps "Call" 
+2. App calls `/get-call-token` with callerId + calleeId
+3. Backend returns token
+4. App joins channel with `agoraEngine.joinChannel(token, channelName, uid)`
+
+*Important*: Keep `APP_CERTIFICATE` only on the server. If it leaks, anyone can generate tokens for your app.
+
+Want me to do the same for *Twilio Access Tokens* or give you the client-side Swift/Kotlin code for joining the call?
