@@ -3,7 +3,78 @@
 # This workflow assumes you have already created the target Azure App Service web app.
 # For instructions see https://docs.microsoft.com/en-us/azure/app-service/quickstart-nodejs?tabs=linux&pivots=development-environment-cli
 #
-# To configure this workflow:
+# To configure this workflow:Got you. Your file failed because it still has the placeholder values. Here's a corrected version that will work once you fill in 2 fields:
+.github/workflows/azure-webapps-node.yml
+Deploy Node.js app to Azure Web App on push to main
+
+name: Build and deploy Node.js app to Azure Web App
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: your-app-name        # CHANGE THIS to your Azure App Service name
+  AZURE_WEBAPP_PACKAGE_PATH: '.'          # CHANGE THIS if your code is in a subfolder
+  NODE_VERSION: '20.x'                    # Change if your app needs a different version
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build
+        run: npm run build --if-present
+      
+      - name: Upload artifact for deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+          
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+What you need to change before pushing:
+
+1. *AZURE_WEBAPP_NAME*: Replace `your-app-name` with the name of your Azure App Service. You find this in Azure Portal > App Services.
+2. *AZURE_WEBAPP_PACKAGE_PATH*: Leave as `.` if your `package.json` is in the repo root. If it's in `/server` or `/backend`, change it to `server` or `backend`.
+3. *Secret*: Go to `Settings > Secrets and variables > Actions` in GitHub and add `AZURE_WEBAPP_PUBLISH_PROFILE`. You get this by clicking "Get publish profile" in Azure Portal > your App Service > Overview.
+
+After you update those, commit the file and push to `main`. The workflow will trigger automatically.
+
+Send me your Azure app name and folder structure if you want me to fill it in exactly for you.
 #
 # 1. Download the Publish Profile for your Azure Web App. You can download this file from the Overview page of your Web App in the Azure Portal.
 #    For more information: https://docs.microsoft.com/en-us/azure/app-service/deploy-github-actions?tabs=applevel#generate-deployment-credentials
