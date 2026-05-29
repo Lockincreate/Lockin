@@ -1,0 +1,48 @@
+Got you. Since I don’t know what your repo is doing, here’s a drop-in GitHub Actions workflow that uses the `LOCKIN` secret. Copy and paste this as `.github/workflows/use-lockin.yml`
+name: Use LOCKIN Secret
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  run-with-secret:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run command with LOCKIN
+        env:
+          LOCKIN_KEY: ${{ secrets.LOCKIN }}
+        run: |
+          echo "Secret loaded successfully"
+          # Replace the line below with what you actually need to do
+          # Example for API call:
+          # curl -H "Authorization: Bearer $LOCKIN_KEY" https://api.example.com/data
+          
+          # Example for Node:
+          # npm install
+          # node script.js
+*Missing pieces you’ll need to add:*
+1. *Replace the `run:` commands* - Put the actual script/command that needs `LOCKIN`. 
+2. *Add setup actions if needed*:
+   - For Node: add `uses: actions/setup-node@v4` before your run step
+   - For Python: add `uses: actions/setup-python@v5`
+   - For Docker: use `uses: docker/setup-buildx-action@v3`
+
+*Example with Node setup:*
+- name: Setup Node
+  uses: actions/setup-node@v4
+  with:
+    node-version: '20'
+
+- name: Run with LOCKIN
+  env:
+    LOCKIN_KEY: ${{ secrets.LOCKIN }}
+  run: npm ci && node index.js
+Commit this file, push to main, and it’ll run. Check the Actions tab to see output.
+
+What are you trying to run with `LOCKIN`? I’ll give you the exact steps for that.
