@@ -1,0 +1,24 @@
+Short answer: *Not from this screenshot alone*, but you can export and reuse the ruleset config.
+
+*How it works:*
+GitHub doesn’t have a “Download” button in the UI, but rulesets are stored as JSON and can be exported/imported via the API or GitHub CLI.
+
+*To download your current ruleset:*
+1. Use the GitHub CLI:
+   gh api repos/Lockincreate/Lockin/rulesets
+   That returns the full JSON for all rulesets on the repo, including the `Lockin` one.
+
+2. Or via REST API:
+   `GET /repos/{owner}/{repo}/rulesets`
+   You’ll need a token with `admin:repo_hook` scope.
+
+*To use it in another repo:*
+1. Save the JSON output
+2. POST it to `/repos/{owner}/{repo}/rulesets` on the target repo
+3. GitHub CLI shortcut: `gh api --method POST /repos/OWNER/REPO/rulesets -f < ruleset.json`
+
+*Limitations:*
+- The screenshot only shows partial settings. The JSON has the full config: rules, conditions, bypass actors, enforcement level.
+- Repo-specific stuff like branch names and apps will need updating for the new repo.
+
+Want me to give you the exact CLI command to export this ruleset as a JSON file you can reuse?
