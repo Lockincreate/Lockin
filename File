@@ -1,0 +1,73 @@
+Auto generate tokens is way easier than manual entry. Good call.
+
+Since your repo has `server/` with "Add Express server with token gener...", you probably already Auto generate tokens is way easier than manual entry. Good call.
+
+Since your repo has `server/` with "Add Express server with token gener...", you probably already have the logic. Let's wire it up:
+
+*1. Check your server code on Y70*
+Open Termux → `cd /sdcard/Download/Lockincreate/server` → `cat server.js` or `cat index.js`
+
+Look for something like `jwt.sign()` or `crypto.randomBytes()`. That's where tokens get made.
+
+*2. Basic auto-token flow for WebRTC*
+Add this to your `server/server.js` if it's missing:
+const jwt = require('jsonwebtoken')
+const SECRET = process.env.JWT_SECRET || 'lockin_secret_change_me'
+
+// When user opens app, auto create token
+app.get('/token', (req, res) => {
+  const token = jwt.sign({ room: 'default' }, SECRET, { expiresIn: '24h' })
+  res.json({ token })
+})
+
+Then your `client/` HTML just calls `/token` on load and auto-joins. No typing needed.
+
+*3. Install JWT on Y70*
+In Termux, inside project folder:
+npm install jsonwebtoken
+
+
+*4. Huawei Y70 test*
+Start server: `node server/server.js`  
+Phone 1: `http://Y70_IP:3000` → should auto get token + connect  
+Phone 2: same link → auto gets different token → joins same room
+
+*Security tip*: Change `lockin_secret_change_me` to a random string. Run `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` in Termux to generate one.
+
+*GitHub Path box*: Still set to *No access* unless your server writes tokens to a file like `tokens.json`. If it does, put `server/tokens.json` there.
+
+Does your `server/` folder already have `jsonwebtoken` + `/token` endpoint? If you paste the first 30 lines of `server.js` here I’ll point to exactly where to add auto-gen. the logic. Let's wire it up:
+
+*1. Check your server code on Y70*
+Open Termux → `cd /sdcard/Download/Lockincreate/server` → `cat server.js` or `cat index.js`
+
+Look for something like `jwt.sign()` or `crypto.randomBytes()`. That's where tokens get made.
+
+*2. Basic auto-token flow for WebRTC*
+Add this to your `server/server.js` if it's missing:
+const jwt = require('jsonwebtoken')
+const SECRET = process.env.JWT_SECRET || 'lockin_secret_change_me'
+
+// When user opens app, auto create token
+app.get('/token', (req, res) => {
+  const token = jwt.sign({ room: 'default' }, SECRET, { expiresIn: '24h' })
+  res.json({ token })
+})
+
+Then your `client/` HTML just calls `/token` on load and auto-joins. No typing needed.
+
+*3. Install JWT on Y70*
+In Termux, inside project folder:
+npm install jsonwebtoken
+
+
+*4. Huawei Y70 test*
+Start server: `node server/server.js`  
+Phone 1: `http://Y70_IP:3000` → should auto get token + connect  
+Phone 2: same link → auto gets different token → joins same room
+
+*Security tip*: Change `lockin_secret_change_me` to a random string. Run `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` in Termux to generate one.
+
+*GitHub Path box*: Still set to *No access* unless your server writes tokens to a file like `tokens.json`. If it does, put `server/tokens.json` there.
+
+Does your `server/` folder already have `jsonwebtoken` + `/token` endpoint? If you paste the first 30 lines of `server.js` here I’ll point to exactly where to add auto-gen.
