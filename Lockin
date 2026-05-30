@@ -1,0 +1,22 @@
+My bad - Huawei Y70, not Vivo. The steps are basically the same though since both run Android.
+
+*For Huawei Y70, 2 key differences:*
+
+*1. Finding your IP on Huawei Y70:*
+`Settings` → `Wi-Fi` → tap the WiFi name you're connected to → scroll down → you'll see `IP address`. Looks like `192.168.1.45`
+
+*2. Termux install on Huawei* 
+Huawei blocks Google Play sometimes, so grab Termux from F-Droid: http://f-droid.org → search "Termux". Play Store version on Huawei often has issues.
+
+*3. Huawei "Battery Optimization" will kill your server* 
+This is the big one. Huawei phones are aggressive with killing background apps. After you start the server in Termux:
+`Settings` → `Apps` → `Apps` → `Termux` → `Battery` → set to `Don't allow` / `Unrestricted` 
+Also lock Termux in Recent Apps so it doesn't get swiped away.
+
+Then the http://Node.js commands I sent before will work:
+pkg install nodejs-lts
+cd /sdcard/Download/Lockin  
+npm start
+*Reality check*: Running a server 24/7 on a Huawei Y70 will overheat + drain battery fast. It's fine for quick testing with 2 phones, but don't expect it to stay up for hours.
+
+You already have the Lockin project files on your Y70, or do you need help getting them there too?
