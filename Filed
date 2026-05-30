@@ -1,0 +1,25 @@
+Perfect, then you're halfway there already 💪
+
+Since you have the Lockin files on your Huawei Y70, let's get the server running:
+
+*Step 1: Open Termux + install Node*
+pkg update && pkg upgrade -y
+pkg install nodejs-lts -y
+*Step 2: Go to your project folder*
+Huawei puts downloads in `/sdcard/Download/`. If your folder is called `Lockin`:
+cd /sdcard/Download/Lockin
+Type `ls` to check you see files like `package.json`, `server.js`
+
+*Step 3: Start the server*
+npm install
+npm start
+If it says "Server running on port 3001", you're good.
+
+*Step 4: Find Y70 IP + test*
+In a new Termux tab: `ifconfig` → copy the IP under `wlan0`. 
+Then on your 2nd phone, open browser: `http://THAT_IP:3001`
+
+*Don’t forget Huawei battery setting*: 
+`Settings > Apps > Termux > Battery > Unrestricted`. Otherwise Huawei will kill it in 2min.
+
+Hit me with any error message you see and I'll decode it. What does Termux show after `npm start`?
